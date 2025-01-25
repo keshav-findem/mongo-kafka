@@ -19,6 +19,8 @@ package com.mongodb.kafka.connect.sink.namespace.mapping;
 import static com.mongodb.kafka.connect.sink.MongoSinkTopicConfig.COLLECTION_CONFIG;
 import static com.mongodb.kafka.connect.sink.MongoSinkTopicConfig.DATABASE_CONFIG;
 
+import java.util.logging.Logger;
+
 import org.apache.kafka.connect.sink.SinkRecord;
 
 import com.mongodb.MongoNamespace;
@@ -28,6 +30,7 @@ import com.mongodb.kafka.connect.sink.converter.SinkDocument;
 
 public class DefaultNamespaceMapper implements NamespaceMapper {
 
+  private static final Logger LOGGER = Logger.getLogger(DefaultNamespaceMapper.class.getName());
   private MongoNamespace namespace;
 
   @Override
@@ -36,6 +39,15 @@ public class DefaultNamespaceMapper implements NamespaceMapper {
     String collectionName = config.getString(COLLECTION_CONFIG);
     if (collectionName.isEmpty()) {
       collectionName = config.getTopic();
+      LOGGER.info("Offical connector collection name: " + collectionName);
+
+      String[] parts = collectionName.split("\\.");
+      if (parts.length > 1) {
+        collectionName = parts[1];
+        LOGGER.info("Modified connector collection name: " + collectionName);
+      } else {
+        LOGGER.warning("Collection name split failed. Using default: " + collectionName);
+      }
     }
     this.namespace = new MongoNamespace(databaseName, collectionName);
   }
